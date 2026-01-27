@@ -16,7 +16,10 @@ const allowedOrigins = [
 ];
 
 const corsOptions = {
-  origin: (origin, callback) => {
+  origin: (
+    origin: string | undefined,
+    callback: (err: Error | null, allow?: boolean) => void,
+  ) => {
     // If there's no origin (like for same-origin requests or server-to-server), allow it.
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
