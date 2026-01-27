@@ -1,0 +1,81 @@
+name: Deploy Metal Scraper (Full Stack)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "docker-compose.yml"
+      - "nginx.conf"
+      - ".github/workflows/**"
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_BACKEND: ghcr.io/yigit4416/metal-scraper-backend
+  IMAGE_FRONTEND: ghcr.io/yigit4416/metal-scraper-frontend
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      # --- BACKEND BUILD ---
+      - name: Build & Push Backend
+        run: |
+          docker build -t ${{ env.IMAGE_BACKEND }}:latest ./backend
+          docker push ${{ env.IMAGE_BACKEND }}:latest
+
+      # --- FRONTEND BUILD ---
+      - name: Build & Push Frontend
+        run: |
+          docker build -t ${{ env.IMAGE_FRONTEND }}:latest ./frontend
+          docker push ${{ env.IMAGE_FRONTEND }}:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1. Copy Configs to VPS
+      - name: Copy Configs to VPS
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.VPS_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.yml,nginx.conf"
+          target: "/root/app"
+
+      # 2. Connect and Deploy
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/app
+
+            # Login to GHCR
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u yigit4416 --password-stdin
+
+            # Pull latest images
+            docker compose pull
+
+            # Restart Nginx (to apply config changes)
+            docker compose restart nginx
+
+            # Start containers (Frontend + Backend)
+            docker compose up -d --remove-orphans
+
+            # Clean up
+            docker image prune -f

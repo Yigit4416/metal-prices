@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Gold Prices (Bursa)</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f9f9f9; }
+        h1 { color: #333; }
+        
+        table { border-collapse: collapse; width: 100%; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f2f2f2; font-weight: bold; color: #555; }
+        
+        /* Status Colors */
+        .up { color: #2ecc71; font-weight: bold; }   /* Green */
+        .down { color: #e74c3c; font-weight: bold; } /* Red */
+        .neutral { color: #7f8c8d; }                 /* Grey */
+
+        .change-cell { display: flex; gap: 5px; align-items: center; }
+        .small-text { font-size: 0.85em; opacity: 0.8; font-weight: normal; }
+    </style>
+</head>
+<body>
+    <h1>Bursa Gold Market (Live Feed)</h1>
+    <p>Last Update: <span id="last-update" style="font-weight:bold;">Waiting...</span></p>
+    
+    <table id="gold-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Buying</th>
+                <th>Selling</th>
+                <th>Change</th> <th>Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            </tbody>
+    </table>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+        const socket = io('http://localhost:3000');
+        const tableBody = document.querySelector('#gold-table tbody');
+        const lastUpdate = document.getElementById('last-update');
+
+        socket.on('gold-update', (data) => {
+            console.log('Received data:', data);
+            lastUpdate.textContent = new Date().toLocaleTimeString();
+            
+            // Clear current table
+            tableBody.innerHTML = '';
+
+            // Rebuild table
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                
+                // Determine Arrow Symbol
+                let arrow = '';
+                if (item.status === 'up') arrow = '▲';
+                else if (item.status === 'down') arrow = '▼';
+
+                // We add the class (up/down) to the Change cell specifically
+                row.innerHTML = `
+                    <td style="font-weight:600;">${item.name}</td>
+                    <td>${item.buying}</td>
+                    <td>${item.selling}</td>
+                    <td class="${item.status}">
+                        ${arrow} ${item.changeRate} 
+                        <span class="small-text">(${item.changeAmount})</span>
+                    </td>
+                    <td style="color:#888;">${item.time}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        });
+    </script>
+</body>
+</html>
