@@ -41,8 +41,15 @@ const fetchGoldData = async (): Promise<GoldData[]> => {
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     );
     await page.goto(url, { waitUntil: "domcontentloaded" });
-    console.log("Waiting 1 second for data to update...");
-    await new Promise((r) => setTimeout(r, 1000));
+    // 3. Wait for a random "human-like" interval
+    const minWait = 3000;
+    const maxWait = 7000;
+    const randomWait =
+      Math.floor(Math.random() * (maxWait - minWait + 1)) + minWait;
+    console.log(
+      `Waiting for a random interval of ${randomWait / 1000} seconds...`,
+    );
+    await new Promise((r) => setTimeout(r, randomWait));
     const html = await page.content();
     const $ = cheerio.load(html);
     const results: GoldData[] = [];
@@ -139,7 +146,7 @@ const startLiveFeed = async () => {
       serverInstance.publish(GOLD_PRICES_CHANNEL, message);
     }
 
-    const randomDelay = Math.floor(Math.random() * (5000 - 1000 + 1) + 1000);
+    const randomDelay = Math.floor(Math.random() * (1500 - 500 + 1)) + 500; // 0.5 to 1.5 seconds
     console.log(`Next fetch in ${randomDelay / 1000}s`);
     setTimeout(startLiveFeed, randomDelay);
   } else {
