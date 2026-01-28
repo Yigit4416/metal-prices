@@ -41,7 +41,8 @@ const fetchGoldData = async (): Promise<GoldData[]> => {
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     );
     await page.goto(url, { waitUntil: "domcontentloaded" });
-    await new Promise((r) => setTimeout(r, 2000));
+    console.log("Waiting 1 second for data to update...");
+    await new Promise((r) => setTimeout(r, 1000));
     const html = await page.content();
     const $ = cheerio.load(html);
     const results: GoldData[] = [];
