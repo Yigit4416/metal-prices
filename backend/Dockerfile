@@ -43,7 +43,7 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends
 
 # 3. Copy only the necessary files for dependency installation
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
 # 4. Copy the rest of your backend code
