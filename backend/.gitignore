@@ -1,2 +1,4 @@
 node_modules/
 gold_prices.sqlite
+.env
+metal-scraper-3f3c3-firebase-adminsdk-fbsvc-b6b2f0af54.json
